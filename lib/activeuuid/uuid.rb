@@ -8,6 +8,10 @@ module UUIDTools
     # duck typing activerecord 3.1 dirty hack )
     def gsub *; self; end
 
+    def ==(another_uuid)
+      self.to_s == another_uuid.to_s
+    end
+
     def next
       self.class.random_create
     end
@@ -22,7 +26,7 @@ module UUIDTools
     end
 
     def to_param
-      hexdigest.upcase
+      to_s
     end
 
     def self.serialize(value)
@@ -34,6 +38,10 @@ module UUIDTools
       else
         nil
       end
+    end
+
+    def bytesize
+      16
     end
 
   private
@@ -54,25 +62,31 @@ end
 module Arel
   module Visitors
     class DepthFirst < Arel::Visitors::Visitor
-      def visit_UUIDTools_UUID(o)
+      def visit_UUIDTools_UUID(o, a = nil)
         o.quoted_id
       end
     end
 
     class MySQL < Arel::Visitors::ToSql
+      def visit_UUIDTools_UUID(o, a = nil)
+        o.quoted_id
+      end
+    end
+
+    class WhereSql < Arel::Visitors::ToSql
       def visit_UUIDTools_UUID(o)
         o.quoted_id
       end
     end
 
     class SQLite < Arel::Visitors::ToSql
-      def visit_UUIDTools_UUID(o)
+      def visit_UUIDTools_UUID(o, a = nil)
         o.quoted_id
       end
     end
 
     class PostgreSQL < Arel::Visitors::ToSql
-      def visit_UUIDTools_UUID(o)
+      def visit_UUIDTools_UUID(o, a = nil)
         "'#{o.to_s}'"
       end
     end
@@ -114,7 +128,7 @@ module ActiveUUID
         EOS
       end
 
-      def instantiate_with_uuid(record)
+      def instantiate_with_uuid(record, record_models = nil)
         uuid_columns.each do |uuid_column|
           record[uuid_column] = UUIDTools::UUID.serialize(record[uuid_column]).to_s if record[uuid_column]
         end

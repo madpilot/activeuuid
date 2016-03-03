@@ -14,7 +14,7 @@ describe ActiveRecord::Base do
       connection.drop_table table_name
     end
 
-    specify { connection.table_exists?(table_name).should be_true }
+    specify { connection.table_exists?(table_name).should be_truthy }
 
     context '#add_column' do
       let(:column_name) { :uuid_column }
@@ -22,7 +22,7 @@ describe ActiveRecord::Base do
 
       before { connection.add_column table_name, column_name, :uuid }
 
-      specify { connection.column_exists?(table_name, column_name).should be_true }
+      specify { connection.column_exists?(table_name, column_name).should be_truthy }
       specify { column.should_not be_nil }
 
       it 'should have proper sql type' do
@@ -85,8 +85,20 @@ describe Article do
 
   context '#destroy' do
     subject { article }
-    its(:delete) { should be_true }
-    its(:destroy) { should be_true }
+    its(:delete) { should be_truthy }
+    its(:destroy) { should be_truthy }
+  end
+
+  context '#save' do
+    subject { article }
+    let(:array) { [1, 2, 3] }
+    
+    its(:save) { should be_truthy }
+
+    context 'when change array field' do
+      before { article.some_array = array }
+      its(:save) { should be_truthy }      
+    end
   end
 end
 
@@ -132,8 +144,8 @@ describe UuidArticle do
 
   context '#destroy' do
     subject { article }
-    its(:delete) { should be_true }
-    its(:destroy) { should be_true }
+    its(:delete) { should be_truthy }
+    its(:destroy) { should be_truthy }
   end
 
   context '#reload' do
